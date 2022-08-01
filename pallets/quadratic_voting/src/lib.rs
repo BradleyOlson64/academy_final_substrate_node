@@ -14,18 +14,20 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Currency};
 	use frame_system::{pallet_prelude::*};
 	use sp_std::vec::Vec; // Step 3.1 will include this in `Cargo.toml`
-	use crypto_kitties;
+	use brads_soft_coupling::{ KittiesInterface, IdentityInterface};
 	pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub type CurrencyAmount<T> = <<T as Config>::Token as Currency<AccountIdOf<T>>>::Balance;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + crypto_kitties::Config {
+	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Token: ReservableCurrency<Self::AccountId>; //Loose coupling. This is some notion of token that satisfies a trait
 		#[pallet::constant]
 		type MinReserveAmount: Get<<Self::Token as Currency<Self::AccountId>>::Balance>;
+		type Identity: IdentityInterface<Self::Origin, Self::AccountId, DispatchResult>;
+		type Kitties: KittiesInterface<Self::Origin, Self::AccountId, <Self::Token as Currency<Self::AccountId>>::Balance , DispatchResult>;
 	}
 	// Pallets use events to inform users when important changes are made.
 	// Event documentation should end with an array that provides descriptive names for parameters.
@@ -60,7 +62,7 @@ pub mod pallet {
 
 		#[pallet::weight(10_000)]
 		pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult{
-			crypto_kitties::Pallet::<T>::create_kitty(origin.clone())?;
+			T::Kitties::create_kitty(origin.clone())?;
 			Ok(())
 		}
 	}

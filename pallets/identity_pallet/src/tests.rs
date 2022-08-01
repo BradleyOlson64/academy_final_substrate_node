@@ -9,8 +9,8 @@ fn can_seed_original_voters() {
 		assert_ok!(IdentityPallet::try_add_as_social_graph_originator(origin.clone()));
 		run_to_block(10);
 		assert_ok!(IdentityPallet::try_add_as_social_graph_originator(origin2.clone()));
-		assert_eq!(IdentityPallet::get_voter_set(1), Some(()));
-		assert_eq!(IdentityPallet::get_voter_set(2), Some(()));
+		assert_eq!(IdentityPallet::get_voter_from_set(1), Some(()));
+		assert_eq!(IdentityPallet::get_voter_from_set(2), Some(()));
 	});
 }
 
@@ -37,7 +37,7 @@ fn voter_can_vouch_for_non_voter() {
 		assert_ok!(IdentityPallet::try_add_as_social_graph_originator(origin2.clone()));
 		assert_ok!(IdentityPallet::vouch_for(origin.clone(), 3));
 		assert_ok!(IdentityPallet::vouch_for(origin2.clone(), 3));
-		assert_eq!(IdentityPallet::get_voter_set(3), Some(()));
+		assert_eq!(IdentityPallet::get_voter_from_set(3), Some(()));
 	});
 }
 
@@ -52,10 +52,10 @@ fn vouch_fail_situations() {
 		assert_ok!(IdentityPallet::vouch_for(origin2.clone(), 2));
 		assert_ok!(IdentityPallet::vouch_for(origin.clone(), 3));
 		assert_noop!(IdentityPallet::vouch_for(origin.clone(), 3), Error::<Test>::VouchedForSameTwice);
-		assert_eq!(IdentityPallet::get_voter_set(1), Some(()));
-		assert_eq!(IdentityPallet::get_voter_set(2), Some(()));
-		assert_eq!(IdentityPallet::get_voter_set(3), None);
+		assert_eq!(IdentityPallet::get_voter_from_set(1), Some(()));
+		assert_eq!(IdentityPallet::get_voter_from_set(2), Some(()));
+		assert_eq!(IdentityPallet::get_voter_from_set(3), None);
 		assert_ok!(IdentityPallet::vouch_for(origin2.clone(), 3));
-		assert_eq!(IdentityPallet::get_voter_set(3), Some(()));
+		assert_eq!(IdentityPallet::get_voter_from_set(3), Some(()));
 	});
 }

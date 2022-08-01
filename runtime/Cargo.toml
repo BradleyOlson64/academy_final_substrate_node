@@ -53,7 +53,7 @@ identity-pallet = { version = "4.0.0-dev", default-features = false, path = "../
 crypto-kitties = { version = "4.0.0-dev", default-features = false, path = "../pallets/crypto_kitties" }
 proof-of-existence = { version = "4.0.0-dev", default-features = false, path = "../pallets/proof_of_existence" }
 quadratic-voting = { version = "4.0.0-dev", default-features = false, path = "../pallets/quadratic_voting" }
-
+brads-soft-coupling = { default-features = false, version = "4.0.0-dev", path = "../pallets/brads_soft_coupling" }
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
 

@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
+use frame_support::pallet_prelude::DispatchResult;
 
 #[cfg(test)]
 mod mock;
@@ -19,7 +20,7 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     // Allows easy access our Pallet's `Balance` type. Comes from `Currency` interface.
-	type BalanceOf<T> =
+	pub type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	// The Gender type used in the `Kitty` struct
@@ -345,5 +346,27 @@ pub mod pallet {
 
 			Ok(())
 		}
+	}
+}
+
+impl<T: Config> brads_soft_coupling::KittiesInterface<T::Origin, T::AccountId, BalanceOf<T>, DispatchResult> for Pallet<T> {
+	fn buy_kitty(origin: T::Origin, kitty_id: [u8; 16], bid_price: BalanceOf<T>) -> DispatchResult {
+		Pallet::<T>::buy_kitty(origin, kitty_id, bid_price)?;
+		Ok(())
+	}
+
+    fn set_price(origin: T::Origin, kitty_id: [u8; 16], new_price: Option<BalanceOf<T>>) -> DispatchResult {
+		Pallet::<T>::set_price(origin, kitty_id, new_price)?;
+		Ok(())
+	}
+
+    fn transfer(origin: T::Origin, to: T::AccountId, kitty_id: [u8; 16]) -> DispatchResult {
+		Pallet::<T>::transfer(origin, to, kitty_id)?;
+		Ok(())
+	}
+
+    fn create_kitty(origin: T::Origin) -> DispatchResult {
+		Pallet::<T>::create_kitty(origin)?;
+		Ok(())
 	}
 }

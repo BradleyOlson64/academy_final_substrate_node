@@ -48,6 +48,7 @@ pub use identity_pallet;
 pub use proof_of_existence;
 pub use quadratic_voting;
 pub use crypto_kitties;
+pub use brads_soft_coupling;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -292,6 +293,8 @@ impl quadratic_voting::Config for Runtime {
 	type Event = Event;
 	type Token = Balances;
 	type MinReserveAmount = ReserveAmount;
+	type Identity = IdentityPallet;
+	type Kitties = SubstrateKitties;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

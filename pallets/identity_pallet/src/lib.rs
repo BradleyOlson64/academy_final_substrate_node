@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_support::pallet_prelude::DispatchResult;
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/v3/runtime/frame>
@@ -34,7 +35,7 @@ pub mod pallet {
 
 	//Pallet storage items
 	#[pallet::storage]
-	#[pallet::getter(fn get_voter_set)]
+	#[pallet::getter(fn get_voter_from_set)]
 	/// Full voter set with weights matching their balances
 	pub(super) type VoterSet<T: Config> = CountedStorageMap<_, Blake2_128, T::AccountId, (), OptionQuery>;
 
@@ -119,5 +120,17 @@ pub mod pallet {
 			Self::deposit_event(Event::VoterVouchedForNonVoter(sender, other));
 			Ok(())
 		}
+	}
+}
+
+impl<T: Config> brads_soft_coupling::IdentityInterface<T::Origin, T::AccountId, DispatchResult> for Pallet<T> {
+	fn try_add_as_social_graph_originator(origin: T::Origin) -> DispatchResult {
+		Pallet::<T>::try_add_as_social_graph_originator(origin)?;
+		Ok(())
+	}
+
+    fn vouch_for(origin: T::Origin, other: T::AccountId) -> DispatchResult {
+		Pallet::<T>::vouch_for(origin, other)?;
+		Ok(())
 	}
 }

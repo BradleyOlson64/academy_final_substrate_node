@@ -1,5 +1,5 @@
 use crate::{self as quadratic_voting, pallet};
-use frame_support::traits::{ConstU16, ConstU128, ConstU64, ReservableCurrency};
+use frame_support::traits::{ConstU16, ConstU32, ConstU128, ConstU64, ReservableCurrency};
 use frame_system as system;
 use pallet_balances;
 use sp_core::H256;
@@ -22,6 +22,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		POEModule: quadratic_voting,
 		SubstrateKitties: crypto_kitties,
+		IdentityPallet: identity_pallet,
 		Balances: pallet_balances,
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 	}
@@ -72,6 +73,8 @@ impl quadratic_voting::Config for Test {
 	type Event = Event;
 	type Token = Balances;
 	type MinReserveAmount = ConstU128<100>;
+	type Identity = IdentityPallet;
+	type Kitties = SubstrateKitties;
 }
 
 impl crypto_kitties::Config for Test {
@@ -79,6 +82,11 @@ impl crypto_kitties::Config for Test {
 	type Currency = Balances;
     type KittyRandomness = RandomnessCollectiveFlip;
     type MaxKittiesOwned = frame_support::pallet_prelude::ConstU32<1>;
+}
+
+impl identity_pallet::Config for Test {
+	type Event = Event;
+	type MinVouches = ConstU32<2>;
 }
 
 impl pallet_randomness_collective_flip::Config for Test {}

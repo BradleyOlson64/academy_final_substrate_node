@@ -535,6 +535,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "brads-soft-coupling"
+version = "4.0.0-dev"
+
+[[package]]
 name = "bs58"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1036,6 +1040,7 @@ dependencies = [
 name = "crypto-kitties"
 version = "4.0.0-dev"
 dependencies = [
+ "brads-soft-coupling",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -2290,6 +2295,7 @@ dependencies = [
 name = "identity-pallet"
 version = "4.0.0-dev"
 dependencies = [
+ "brads-soft-coupling",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -3794,6 +3800,7 @@ dependencies = [
 name = "node-template-runtime"
 version = "4.0.0-dev"
 dependencies = [
+ "brads-soft-coupling",
  "crypto-kitties",
  "frame-benchmarking",
  "frame-executive",
@@ -4693,10 +4700,12 @@ dependencies = [
 name = "quadratic-voting"
 version = "4.0.0-dev"
 dependencies = [
+ "brads-soft-coupling",
  "crypto-kitties",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "identity-pallet",
  "pallet-balances",
  "pallet-randomness-collective-flip",
  "parity-scale-codec",

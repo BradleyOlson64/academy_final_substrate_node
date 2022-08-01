@@ -1,0 +1,4 @@
+[package]
+name = "brads-soft-coupling"
+version = "4.0.0-dev"
+edition = "2021"
