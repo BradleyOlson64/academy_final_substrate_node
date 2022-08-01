@@ -1,12 +1,12 @@
-use crate::{self as proof_of_existence, pallet};
-use frame_support::traits::{ConstU16, ConstU128, ConstU64, ReservableCurrency};
+use crate as crypto_kitties;
+use frame_support::traits::{ConstU16, ConstU64, ConstU128};
 use frame_system as system;
-use pallet_balances;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use pallet_balances;
 use pallet_randomness_collective_flip;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -20,7 +20,6 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		POEModule: proof_of_existence,
 		SubstrateKitties: crypto_kitties,
 		Balances: pallet_balances,
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
@@ -54,6 +53,13 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+impl crypto_kitties::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+    type KittyRandomness = RandomnessCollectiveFlip;
+    type MaxKittiesOwned = frame_support::pallet_prelude::ConstU32<1>;
+}
+
 impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type MaxReserves = ();
@@ -66,19 +72,6 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
 	type WeightInfo = ();
-}
-
-impl proof_of_existence::Config for Test {
-	type Event = Event;
-	type Token = Balances;
-	type ReserveAmount = ConstU128<100>;
-}
-
-impl crypto_kitties::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-    type KittyRandomness = RandomnessCollectiveFlip;
-    type MaxKittiesOwned = frame_support::pallet_prelude::ConstU32<1>;
 }
 
 impl pallet_randomness_collective_flip::Config for Test {}

@@ -44,7 +44,10 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 /// Import the template pallet.
-pub use pallet_template;
+pub use identity_pallet;
+pub use proof_of_existence;
+pub use quadratic_voting;
+pub use crypto_kitties;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -263,8 +266,31 @@ impl pallet_sudo::Config for Runtime {
 }
 
 /// Configure the pallet-template in pallets/template.
-impl pallet_template::Config for Runtime {
+impl identity_pallet::Config for Runtime {
 	type Event = Event;
+}
+
+parameter_types! {
+	pub const ReserveAmount: Balance = 1000;
+}
+
+impl crypto_kitties::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+    type KittyRandomness = RandomnessCollectiveFlip;
+    type MaxKittiesOwned = frame_support::pallet_prelude::ConstU32<100>;
+}
+
+impl proof_of_existence::Config for Runtime {
+	type Event = Event;
+	type Token = Balances;
+	type ReserveAmount = ReserveAmount;
+}
+
+impl quadratic_voting::Config for Runtime {
+	type Event = Event;
+	type Token = Balances;
+	type MinReserveAmount = ReserveAmount;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -283,7 +309,10 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
-		TemplateModule: pallet_template,
+		IdentityPallet: identity_pallet,
+		SubstrateKitties: crypto_kitties,
+		QuadraticVoting: quadratic_voting,
+		ProofOfExistence: proof_of_existence,
 	}
 );
 
@@ -328,7 +357,7 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
-		[pallet_template, TemplateModule]
+		[identity_pallet, IdentityPallet]
 	);
 }
 

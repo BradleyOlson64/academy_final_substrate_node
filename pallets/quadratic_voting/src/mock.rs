@@ -1,4 +1,4 @@
-use crate::{self as proof_of_existence, pallet};
+use crate::{self as quadratic_voting, pallet};
 use frame_support::traits::{ConstU16, ConstU128, ConstU64, ReservableCurrency};
 use frame_system as system;
 use pallet_balances;
@@ -20,7 +20,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		POEModule: proof_of_existence,
+		POEModule: quadratic_voting,
 		SubstrateKitties: crypto_kitties,
 		Balances: pallet_balances,
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
@@ -68,10 +68,10 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-impl proof_of_existence::Config for Test {
+impl quadratic_voting::Config for Test {
 	type Event = Event;
 	type Token = Balances;
-	type ReserveAmount = ConstU128<100>;
+	type MinReserveAmount = ConstU128<100>;
 }
 
 impl crypto_kitties::Config for Test {

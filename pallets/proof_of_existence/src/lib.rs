@@ -3,7 +3,6 @@
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
-
 #[cfg(test)]
 mod mock;
 
@@ -15,12 +14,13 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Currency};
 	use frame_system::{pallet_prelude::*};
 	use sp_std::vec::Vec; // Step 3.1 will include this in `Cargo.toml`
+	use crypto_kitties;
 	pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub type BalanceOf<T> = <<T as Config>::Token as Currency<AccountIdOf<T>>>::Balance;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + crypto_kitties::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Token: ReservableCurrency<Self::AccountId>; //Loose coupling. This is some notion of token that satisfies a trait
@@ -68,7 +68,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
-			let sender = ensure_signed(origin)?;
+			let sender = ensure_signed(origin.clone())?;
 
 			// Verify that the specified proof has not already been claimed.
 			ensure!(!Proofs::<T>::contains_key(&proof), Error::<T>::ProofAlreadyClaimed);
@@ -84,7 +84,6 @@ pub mod pallet {
 
 			// Emit an event that the claim was created.
 			Self::deposit_event(Event::ClaimCreated(sender, proof));
-
 			Ok(())
 		}
 
@@ -121,6 +120,12 @@ pub mod pallet {
 		pub fn jackpot(origin: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			T::Token::deposit_creating(&sender, amount);
+			Ok(())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult{
+			crypto_kitties::Pallet::<T>::create_kitty(origin.clone())?;
 			Ok(())
 		}
 	}

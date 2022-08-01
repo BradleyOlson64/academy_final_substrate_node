@@ -1,8 +1,10 @@
 [workspace]
 members = [
     "node",
-    "pallets/template",
+    "pallets/identity_pallet",
     "pallets/proof_of_existence",
+    "pallets/crypto_kitties",
+    "pallets/quadratic_voting",
     "runtime",
 ]
 [profile.release]

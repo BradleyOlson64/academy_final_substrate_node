@@ -1033,6 +1033,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto-kitties"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-randomness-collective-flip",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "crypto-mac"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2268,6 +2284,20 @@ dependencies = [
  "rustls-native-certs",
  "tokio",
  "tokio-rustls",
+]
+
+[[package]]
+name = "identity-pallet"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -3764,6 +3794,7 @@ dependencies = [
 name = "node-template-runtime"
 version = "4.0.0-dev"
 dependencies = [
+ "crypto-kitties",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -3772,16 +3803,18 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "identity-pallet",
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
- "pallet-template",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
+ "proof-of-existence",
+ "quadratic-voting",
  "scale-info",
  "sp-api",
  "sp-block-builder",
@@ -4078,20 +4111,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-template"
-version = "4.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
 ]
 
 [[package]]
@@ -4579,10 +4598,12 @@ dependencies = [
 name = "proof-of-existence"
 version = "4.0.0-dev"
 dependencies = [
+ "crypto-kitties",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-balances",
+ "pallet-randomness-collective-flip",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -4666,6 +4687,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd89aa18fbf9533a581355a22438101fe9c2ed8c9e2f0dcf520552a3afddf2"
 dependencies = [
  "cc",
+]
+
+[[package]]
+name = "quadratic-voting"
+version = "4.0.0-dev"
+dependencies = [
+ "crypto-kitties",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-randomness-collective-flip",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
