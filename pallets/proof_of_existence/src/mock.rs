@@ -1,5 +1,5 @@
-use crate::{self as proof_of_existence, pallet};
-use frame_support::traits::{ConstU16, ConstU128, ConstU64, ReservableCurrency};
+use crate::{self as proof_of_existence};
+use frame_support::traits::{ConstU16, ConstU128, ConstU64};
 use frame_system as system;
 use pallet_balances;
 use sp_core::H256;

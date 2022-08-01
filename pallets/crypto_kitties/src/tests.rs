@@ -1,9 +1,5 @@
 use crate::{mock::*, Error};
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use codec::{Encode, Decode};
 use frame_support::{assert_noop, assert_ok};
-use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Currency};
 use frame_system::pallet_prelude::*;
 
 #[test]

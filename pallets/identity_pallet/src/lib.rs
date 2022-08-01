@@ -16,10 +16,8 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{pallet_prelude::*, Blake2_128};
+	use frame_support::{pallet_prelude::*, Blake2_128, BoundedVec};
 	use frame_system::pallet_prelude::*;
-	use frame_support::traits::ReservableCurrency;
-	use frame_support::traits::Currency;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -41,23 +39,32 @@ pub mod pallet {
 	pub(super) type VoterSet<T: Config> = CountedStorageMap<_, Blake2_128, T::AccountId, (), OptionQuery>;
 
 	#[pallet::storage]
-	pub(super) type VouchedForSet<T: Config> = CountedStorageMap<_, Blake2_128, T::AccountId, u32>;
+	pub(super) type VouchedForSet<T: Config> = StorageMap<_, Blake2_128, T::AccountId, VouchersFor<T>>;
+
+	/// Non storage items
+	pub(super) type VouchersFor<T> = BoundedVec<<T as frame_system::Config>::AccountId, <T as Config>::MinVouches>;
 
 	// Pallets events
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Event documentation should end with an array that provides descriptive names for event
-		/// parameters. [something, who]
-		SomethingStored(u32, T::AccountId),
+		/// Original member of social graph added
+		OriginatorAdded(T::AccountId),
+		/// A voter has vouched for a non voter [voter, nonVoter]
+		VoterVouchedForNonVoter(T::AccountId, T::AccountId),
 	}
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
+		/// Proposed originator is already in the voter set
+		AlreadyInSet,
 		/// Tried to add social graph originators when there are enough
 		NoNeedForAdditionalOriginators,
-
+		/// Voucher isn't in the voter set
+		VoucherNotInVoterSet,
+		/// Voter can only vouch for each other once
+		VouchedForSameTwice,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -68,15 +75,48 @@ pub mod pallet {
 		/// Any social graph needs to start somewhere. Add this caller to the set if set size below minVouches.
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
 		pub fn try_add_as_social_graph_originator(origin: OriginFor<T>) -> DispatchResult {
-			
+			let sender = ensure_signed(origin.clone())?;
+			Self::add_originator_impl(sender)?;
 			Ok(())
 		}
 
 		/// Vouch for another public key. If not enough to add them to voter set, then creates or 
 		/// increments entry in vouched for set.
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn vouch_for(origin: OriginFor<T>) -> DispatchResult {
+		pub fn vouch_for(origin: OriginFor<T>, other: T::AccountId) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+			Self::vouch_for_impl(sender, other)?;
+			Ok(())
+		}
+	}
 
+	impl<T: Config> Pallet<T> {
+		fn add_originator_impl(sender: T::AccountId) -> Result<(), DispatchError> {
+			ensure!(!VoterSet::<T>::contains_key(sender.clone()), Error::<T>::AlreadyInSet);
+			ensure!(VoterSet::<T>::count() < T::MinVouches::get(), Error::<T>::NoNeedForAdditionalOriginators);
+			VoterSet::<T>::insert(sender.clone(), ());
+			Self::deposit_event(Event::OriginatorAdded(sender));
+			Ok(())
+		}
+
+		fn vouch_for_impl(sender: T::AccountId, other: T::AccountId) -> Result<(), DispatchError> {
+			ensure!(VoterSet::<T>::contains_key(sender.clone()), Error::<T>::VoucherNotInVoterSet);
+			if VoterSet::<T>::contains_key(other.clone()) { return Ok(()); }
+			if let Some(vouchers) = VouchedForSet::<T>::get(other.clone()) {
+				ensure!(!vouchers.contains(&sender), Error::<T>::VouchedForSameTwice);
+				if vouchers.len() + 1 >= T::MinVouches::get() as usize {
+					VoterSet::<T>::insert(other.clone(), ());
+					VouchedForSet::<T>::remove(other.clone());
+				}
+				else {
+					VouchedForSet::<T>::try_append(&other, sender.clone())
+						.expect("Already checked that there is room"); 
+				}
+			} else {
+				VouchedForSet::<T>::try_append(&other, sender.clone())
+						.expect("Already checked that there is room");
+			};
+			Self::deposit_event(Event::VoterVouchedForNonVoter(sender, other));
 			Ok(())
 		}
 	}
