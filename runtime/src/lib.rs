@@ -268,6 +268,7 @@ impl pallet_sudo::Config for Runtime {
 /// Configure the pallet-template in pallets/template.
 impl identity_pallet::Config for Runtime {
 	type Event = Event;
+	type MinVouches = ConstU32<2>;
 }
 
 parameter_types! {

@@ -1,5 +1,5 @@
 use crate as pallet_template;
-use frame_support::traits::{ConstU16, ConstU64};
+use frame_support::traits::{ConstU16, ConstU32, ConstU64, ConstU128};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -51,9 +51,28 @@ impl system::Config for Test {
 
 impl pallet_template::Config for Test {
 	type Event = Event;
+	type MinVouches = ConstU32<2>;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+}
+
+pub struct ExtBuilder;
+impl ExtBuilder {
+	pub fn build() -> sp_io::TestExternalities {
+	 let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	 let mut ext = sp_io::TestExternalities::new(t);
+	 ext.execute_with(|| System::set_block_number(2));
+	 ext
+	}
+}
+
+pub fn run_to_block(n: u64) {
+	while System::block_number() < n {
+		let head = System::finalize();
+		System::set_block_number(System::block_number() + 1);
+		System::initialize(&System::block_number(), &head.parent_hash, &head.digest);
+	}
 }

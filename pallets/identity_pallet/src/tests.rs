@@ -2,19 +2,29 @@ use crate::{mock::*, Error};
 use frame_support::{assert_noop, assert_ok};
 
 #[test]
-fn it_works_for_default_value() {
-	new_test_ext().execute_with(|| {
-		// Dispatch a signed extrinsic.
-		assert_ok!(TemplateModule::do_something(Origin::signed(1), 42));
-		// Read pallet storage and assert an expected result.
-		assert_eq!(TemplateModule::something(), Some(42));
+fn can_seed_original_voters() {
+	ExtBuilder::build().execute_with(|| {
+		
 	});
 }
 
 #[test]
-fn correct_error_for_none_value() {
-	new_test_ext().execute_with(|| {
-		// Ensure the expected error is thrown when no value is present.
-		assert_noop!(TemplateModule::cause_error(Origin::signed(1)), Error::<Test>::NoneValue);
+fn can_not_seed_if_enough_voters() {
+	ExtBuilder::build().execute_with(|| {
+		
+	});
+}
+
+#[test]
+fn voter_can_vouch_for_non_voter() {
+	ExtBuilder::build().execute_with(|| {
+		
+	});
+}
+
+#[test]
+fn non_voter_can_not_vouch() {
+	ExtBuilder::build().execute_with(|| {
+		
 	});
 }
