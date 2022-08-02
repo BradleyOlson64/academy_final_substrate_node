@@ -27,7 +27,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MinReserveAmount: Get<<Self::Token as Currency<Self::AccountId>>::Balance>;
 		type Identity: IdentityInterface<Self::Origin, Self::AccountId, DispatchResult>;
-		type Kitties: KittiesInterface<Self::Origin, Self::AccountId, <Self::Token as Currency<Self::AccountId>>::Balance , DispatchResult>;
+		type Kitties: KittiesInterface<Self::Origin, Self::AccountId, <Self::Token as Currency<Self::AccountId>>::Balance, BoundedVec<[u8;16], ConstU32<1>>,  DispatchResult>;
 	}
 	// Pallets use events to inform users when important changes are made.
 	// Event documentation should end with an array that provides descriptive names for parameters.

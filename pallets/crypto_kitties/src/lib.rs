@@ -2,6 +2,7 @@
 
 pub use pallet::*;
 use frame_support::pallet_prelude::DispatchResult;
+use frame_support::BoundedVec;
 
 #[cfg(test)]
 mod mock;
@@ -349,7 +350,7 @@ pub mod pallet {
 	}
 }
 
-impl<T: Config> brads_soft_coupling::KittiesInterface<T::Origin, T::AccountId, BalanceOf<T>, DispatchResult> for Pallet<T> {
+impl<T: Config> brads_soft_coupling::KittiesInterface<T::Origin, T::AccountId, BalanceOf<T>, BoundedVec<[u8; 16], T::MaxKittiesOwned>, DispatchResult> for Pallet<T> {
 	fn buy_kitty(origin: T::Origin, kitty_id: [u8; 16], bid_price: BalanceOf<T>) -> DispatchResult {
 		Pallet::<T>::buy_kitty(origin, kitty_id, bid_price)?;
 		Ok(())
@@ -368,5 +369,9 @@ impl<T: Config> brads_soft_coupling::KittiesInterface<T::Origin, T::AccountId, B
     fn create_kitty(origin: T::Origin) -> DispatchResult {
 		Pallet::<T>::create_kitty(origin)?;
 		Ok(())
+	}
+
+	fn get_kitties_owned(account_id: T::AccountId) -> BoundedVec<[u8; 16], T::MaxKittiesOwned> {
+		Pallet::<T>::get_kitties_owned(account_id)
 	}
 }

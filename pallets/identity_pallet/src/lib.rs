@@ -133,4 +133,8 @@ impl<T: Config> brads_soft_coupling::IdentityInterface<T::Origin, T::AccountId, 
 		Pallet::<T>::vouch_for(origin, other)?;
 		Ok(())
 	}
+
+	fn get_voter_from_set(account_id: T::AccountId) -> Option<()> {
+		Pallet::<T>::get_voter_from_set(account_id)
+	}
 }
