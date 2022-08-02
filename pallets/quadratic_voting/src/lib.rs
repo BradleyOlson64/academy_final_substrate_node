@@ -16,6 +16,7 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 	use frame_support::storage::types::StorageValue;
 	use frame_system::{pallet_prelude::*};
 	use frame_support::traits::OriginTrait;
+	use sp_std::vec::Vec;
 	use frame_support::sp_runtime::traits::IntegerSquareRoot;
 	use brads_soft_coupling::{ KittiesInterface, IdentityInterface};
 	pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -45,7 +46,7 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Proposal submitted [submitter, proposal]
-		ProposalSubmitted(T::AccountId, String),
+		ProposalSubmitted(T::AccountId, BoundedVec<u8, T::MaxProposalLength>),
 		/// Event emitted when voting power is reserved by locking currency [who, amount]
 		VotingPowerReserved(T::AccountId, CurrencyAmount<T>),
 		/// Event emitted when voting power is released by unlocking currency [who]
@@ -53,9 +54,9 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		/// Voted on current proposal [user, (ayeVotes, nayVotes)]
 		VotedOnCurrentProposal(T::AccountId, (u128, u128)),
 		/// Vote on current proposal finalized [proposal, (ayeVotes, nayVotes)]
-		VoteOnCurrentProposalPassed(String, (u128, u128)),
+		VoteOnCurrentProposalPassed(BoundedVec<u8, T::MaxProposalLength>, (u128, u128)),
 		/// Vote on current proposal failed [proposal, (ayeVotes, nayVotes)]
-		CurrentProposalRejected(String, (u128, u128)),
+		CurrentProposalRejected(BoundedVec<u8, T::MaxProposalLength>, (u128, u128)),
 	}
 	#[pallet::error]
 	pub enum Error<T> {
@@ -152,12 +153,11 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		fn add_proposal_impl(sender: T::AccountId, proposal_string: Vec<u8>) -> Result<(), DispatchError> {
 			ensure!(proposal_string.len() != 0, Error::<T>::TriedToAddEmptyProposal);
 			let proposal_as_bounded: BoundedVec<u8, T::MaxProposalLength> = BoundedVec::truncate_from(proposal_string);
-			let proposal_escaped = proposal_as_bounded.escape_ascii().to_string();
-			Proposals::<T>::try_append(proposal_as_bounded)
+			Proposals::<T>::try_append(proposal_as_bounded.clone())
 				.map_err(|()| Error::<T>::TooManyProposals)?;
 			Proposers::<T>::try_append(sender.clone())
 				.map_err(|()| Error::<T>::TooManyProposals)?;
-			Self::deposit_event(Event::ProposalSubmitted(sender, proposal_escaped));
+			Self::deposit_event(Event::ProposalSubmitted(sender, proposal_as_bounded));
 			Ok(())
 		}
 
@@ -224,19 +224,18 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 			proposers.remove(0);
 			Proposals::<T>::set(proposals);
 			Proposers::<T>::set(proposers);
-			let proposal_escaped = proposal_bounded.escape_ascii().to_string();
 
 			// Getting current tally and resetting it
 			let tally = Tally::<T>::take();
 			
 			if tally.0 > tally.1 * 2 {
 				// Use proposal to trigger proposal action if any
-				if proposal_escaped == "mint a kitty" {
+				if proposal_bounded.to_vec() == b"mint a kitty".to_vec() {
 					let origin = OriginFor::<T>::root();
 					T::Kitties::free_create_kitty(origin, proposer).unwrap(); // Honestly don't know what to do with this return value. No time to solve
 				}
 				
-				Self::deposit_event(Event::VoteOnCurrentProposalPassed(proposal_escaped, tally));
+				Self::deposit_event(Event::VoteOnCurrentProposalPassed(proposal_bounded, tally));
 			} else {
 
 			}
