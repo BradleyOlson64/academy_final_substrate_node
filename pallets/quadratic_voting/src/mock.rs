@@ -73,7 +73,7 @@ impl quadratic_voting::Config for Test {
 	type Event = Event;
 	type Token = Balances;
 	type MinReserveAmount = ConstU128<100>;
-	type MaxProposals = ConstU32<25>;
+	type MaxProposals = ConstU32<1>;
 	type MaxProposalLength = ConstU32<1_000>;
 	type BlocksPerVote = ConstU32<60>;
 	type ParticipationThreshold = ConstU128<10_000>;
@@ -102,7 +102,7 @@ impl ExtBuilder {
 	 let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	 pallet_balances::GenesisConfig::<Test> {
 	  balances: vec![
-	   (1, 1000000000000),
+	   (1, 100_000_000_000),
 	   (2, 1000000000000),
 	   (3, 1000000000000),
 	   (4, 1000000000000),

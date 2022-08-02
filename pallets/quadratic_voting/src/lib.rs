@@ -88,14 +88,17 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 	pub(super) type Proposals<T: Config> = StorageValue<_, BoundedVec<BoundedVec<u8, T::MaxProposalLength>, T::MaxProposals>, ValueQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn get_proposers)]
 	/// A structure containing the ordered list of all proposers
 	pub(super) type Proposers<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxProposalLength>, ValueQuery>;
 	
 	#[pallet::storage]
+	#[pallet::getter(fn get_reserve)]
 	/// The set containing associated reserves for each account id. Determines voting power.
 	pub(super) type ReserveSet<T: Config> = CountedStorageMap<_, Blake2_128, T::AccountId, CurrencyAmount<T>, ValueQuery>;
 	
 	#[pallet::storage]
+	#[pallet::getter(fn get_tally)]
 	/// The vote tally for the current proposal
 	pub(super) type Tally<T: Config> = StorageValue<_, (u128, u128), ValueQuery>;
 
@@ -154,6 +157,7 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 	impl<T: Config> Pallet<T> {
 		fn add_proposal_impl(sender: T::AccountId, proposal_string: Vec<u8>) -> Result<(), DispatchError> {
 			ensure!(proposal_string.len() != 0, Error::<T>::TriedToAddEmptyProposal);
+			ensure!(T::Identity::get_voter_from_set(sender.clone()) == Some(()), Error::<T>::NotInVoterSet);
 			let proposal_as_bounded: BoundedVec<u8, T::MaxProposalLength> = BoundedVec::truncate_from(proposal_string);
 			Proposals::<T>::try_append(proposal_as_bounded.clone())
 				.map_err(|()| Error::<T>::TooManyProposals)?;
@@ -185,7 +189,9 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 
 		fn vote_on_current_proposal_impl(sender: T::AccountId, verdict: bool) -> Result<(), DispatchError> {
 			ensure!(ReserveSet::<T>::contains_key(sender.clone()), Error::<T>::VotedWithNoVotingPower);
-			ensure!(T::Identity::get_voter_from_set(sender.clone()) == Some(()), Error::<T>::NotInVoterSet);
+			if let None = T::Identity::get_voter_from_set(sender.clone()) {
+				return Result::Err(frame_support::dispatch::DispatchError::from(Error::<T>::NotInVoterSet));
+			}
 			let voter_reserve = ReserveSet::<T>::get(sender.clone());
 			let voter_power: u128 = Self::calc_voter_power_from_reserve(voter_reserve)?;
 			let mut current_tally = Tally::<T>::get();
