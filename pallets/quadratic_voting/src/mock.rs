@@ -1,5 +1,5 @@
 use crate::{self as quadratic_voting, pallet};
-use frame_support::traits::{ConstU16, ConstU32, ConstU128, ConstU64, ReservableCurrency};
+use frame_support::traits::{ConstU16, ConstU32, ConstU128, ConstU64, ReservableCurrency, Hooks};
 use frame_system as system;
 use pallet_balances;
 use sp_core::H256;
@@ -20,7 +20,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		POEModule: quadratic_voting,
+		QuadraticVoting: quadratic_voting,
 		SubstrateKitties: crypto_kitties,
 		IdentityPallet: identity_pallet,
 		Balances: pallet_balances,
@@ -73,6 +73,9 @@ impl quadratic_voting::Config for Test {
 	type Event = Event;
 	type Token = Balances;
 	type MinReserveAmount = ConstU128<100>;
+	type MaxProposals = ConstU32<25>;
+	type MaxProposalLength = ConstU32<1000>;
+	type BlocksPerVote = ConstU32<60>;
 	type Identity = IdentityPallet;
 	type Kitties = SubstrateKitties;
 }
@@ -120,5 +123,6 @@ impl ExtBuilder {
 		let head = System::finalize();
 		System::set_block_number(System::block_number() + 1);
 		System::initialize(&System::block_number(), &head.parent_hash, &head.digest);
+		QuadraticVoting::on_initialize(System::block_number());
 	}
    }

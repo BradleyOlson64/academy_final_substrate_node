@@ -19,8 +19,8 @@ fn kitty_side_effect() {
 	ExtBuilder::build().execute_with(|| {
 		let origin = Origin::signed(1);
 		// Ensure the expected error is thrown when no value is present.
-		assert_ok!(POEModule::create_kitty(origin.clone()));
+		assert_ok!(QuadraticVoting::create_kitty(origin.clone()));
 		run_to_block(10);
-		assert_noop!(POEModule::create_kitty(origin.clone()), crypto_kitties::Error::<Test>::TooManyOwned);
+		assert_noop!(QuadraticVoting::create_kitty(origin.clone()), crypto_kitties::Error::<Test>::TooManyOwned);
 	});
 }

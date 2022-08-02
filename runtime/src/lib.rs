@@ -280,7 +280,7 @@ impl crypto_kitties::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
     type KittyRandomness = RandomnessCollectiveFlip;
-    type MaxKittiesOwned = frame_support::pallet_prelude::ConstU32<100>;
+    type MaxKittiesOwned = frame_support::pallet_prelude::ConstU32<1>;
 }
 
 impl proof_of_existence::Config for Runtime {
@@ -292,6 +292,9 @@ impl proof_of_existence::Config for Runtime {
 impl quadratic_voting::Config for Runtime {
 	type Event = Event;
 	type Token = Balances;
+	type MaxProposals = ConstU32<25>;
+	type MaxProposalLength = ConstU32<1000>;
+	type BlocksPerVote = ConstU32<60>;
 	type MinReserveAmount = ReserveAmount;
 	type Identity = IdentityPallet;
 	type Kitties = SubstrateKitties;
