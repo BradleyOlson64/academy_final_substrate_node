@@ -35,6 +35,8 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		#[pallet::constant]
 		type BlocksPerVote: Get<u32>;
 		#[pallet::constant]
+		type ParticipationThreshold: Get<u128>;
+		#[pallet::constant]
 		type MinReserveAmount: Get<<Self::Token as Currency<Self::AccountId>>::Balance>;
 		/// Soft coupled custom pallets
 		type Identity: IdentityInterface<Self::Origin, Self::AccountId, DispatchResult>;
@@ -227,8 +229,15 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 
 			// Getting current tally and resetting it
 			let tally = Tally::<T>::take();
-			
-			if tally.0 > tally.1 * 2 {
+			let twice_nay = match tally.1.checked_mul(2) {
+				Some(x) => x,
+				None => u128::MAX // Sensable default
+			};
+			let yae_and_nay = match tally.0.checked_add(tally.1) {
+				Some(x) => x,
+				None => 0
+			};
+			if tally.0 > twice_nay && yae_and_nay > T::ParticipationThreshold::get() {
 				// Use proposal to trigger proposal action if any
 				if proposal_bounded.to_vec() == b"mint a kitty".to_vec() {
 					let origin = OriginFor::<T>::root();

@@ -74,8 +74,9 @@ impl quadratic_voting::Config for Test {
 	type Token = Balances;
 	type MinReserveAmount = ConstU128<100>;
 	type MaxProposals = ConstU32<25>;
-	type MaxProposalLength = ConstU32<1000>;
+	type MaxProposalLength = ConstU32<1_000>;
 	type BlocksPerVote = ConstU32<60>;
+	type ParticipationThreshold = ConstU128<10_000>;
 	type Identity = IdentityPallet;
 	type Kitties = SubstrateKitties;
 }

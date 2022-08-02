@@ -295,6 +295,7 @@ impl quadratic_voting::Config for Runtime {
 	type MaxProposals = ConstU32<25>;
 	type MaxProposalLength = ConstU32<1000>;
 	type BlocksPerVote = ConstU32<60>;
+	type ParticipationThreshold = ConstU128<10_000>;
 	type MinReserveAmount = ReserveAmount;
 	type Identity = IdentityPallet;
 	type Kitties = SubstrateKitties;
