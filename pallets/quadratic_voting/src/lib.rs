@@ -51,6 +51,8 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		AllVotingPowerReleased(T::AccountId),
 		/// Voted on current proposal [user, (ayeVotes, nayVotes)]
 		VotedOnCurrentProposal(T::AccountId, (u128, u128)),
+		/// Vote on current proposal finalized [proposal, (ayeVotes, nayVotes)]
+		VoteOnCurrentProposalFinalized(String, (u128, u128))
 	}
 	#[pallet::error]
 	pub enum Error<T> {
@@ -94,7 +96,7 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 			if (b % T::BlocksPerVote::get().into()) == BlockNumberFor::<T>::from(0u32) {
 				Self::finalize_current_vote();
 			}
-			0
+			10_000
 		}
 	}
 
@@ -201,7 +203,22 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		}
 
 		fn finalize_current_vote() {
+			// Getting current proposal if any and removing from storage
+			let mut proposals = Proposals::<T>::get();
+			if(proposals.len() == 0) { 
+				return; 
+			}
+			let proposal_bounded = proposals.get(0).expect("Already checked length").clone();
+			proposals.remove(0);
+			Proposals::<T>::set(proposals);
+			let proposal_escaped = proposal_bounded.escape_ascii().to_string();
 
+			// Getting current tally and setting to 0's
+			let tally = Tally::<T>::take();
+
+			// Use proposal and tally to trigger proposal action if any
+
+			Self::deposit_event(Event::VoteOnCurrentProposalFinalized(proposal_escaped, tally));
 		}
 	}
 }
