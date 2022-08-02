@@ -1,5 +1,5 @@
-use crate::{self as quadratic_voting, pallet};
-use frame_support::traits::{ConstU16, ConstU32, ConstU128, ConstU64, ReservableCurrency, Hooks};
+use crate::{self as quadratic_voting};
+use frame_support::traits::{ConstU16, ConstU32, ConstU128, ConstU64, Hooks};
 use frame_system as system;
 use pallet_balances;
 use sp_core::H256;

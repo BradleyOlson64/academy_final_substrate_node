@@ -17,5 +17,7 @@ pub trait KittiesInterface<Origin, AccountId, Balance, BoundedVec, DispatchResul
 
     fn create_kitty(origin: Origin) -> DispatchResult;
 
+    fn free_create_kitty(origin: Origin, recipient: AccountId) -> DispatchResult;
+
     fn get_kitties_owned(account_id: AccountId) -> BoundedVec;
 }

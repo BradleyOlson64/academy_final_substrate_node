@@ -15,6 +15,7 @@ use frame_support::pallet_prelude::DispatchResult;
 use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Currency};
 	use frame_support::storage::types::StorageValue;
 	use frame_system::{pallet_prelude::*};
+	use frame_support::traits::OriginTrait;
 	use frame_support::sp_runtime::traits::IntegerSquareRoot;
 	use brads_soft_coupling::{ KittiesInterface, IdentityInterface};
 	pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -52,7 +53,9 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		/// Voted on current proposal [user, (ayeVotes, nayVotes)]
 		VotedOnCurrentProposal(T::AccountId, (u128, u128)),
 		/// Vote on current proposal finalized [proposal, (ayeVotes, nayVotes)]
-		VoteOnCurrentProposalFinalized(String, (u128, u128))
+		VoteOnCurrentProposalPassed(String, (u128, u128)),
+		/// Vote on current proposal failed [proposal, (ayeVotes, nayVotes)]
+		CurrentProposalRejected(String, (u128, u128)),
 	}
 	#[pallet::error]
 	pub enum Error<T> {
@@ -78,8 +81,12 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_proposals)]
-	/// A value containing a bounded vec of proposal strings as byet vectors
+	/// A structure containing a bounded vec of proposal strings as byet vectors
 	pub(super) type Proposals<T: Config> = StorageValue<_, BoundedVec<BoundedVec<u8, T::MaxProposalLength>, T::MaxProposals>, ValueQuery>;
+
+	#[pallet::storage]
+	/// A structure containing the ordered list of all proposers
+	pub(super) type Proposers<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxProposalLength>, ValueQuery>;
 	
 	#[pallet::storage]
 	/// The set containing associated reserves for each account id. Determines voting power.
@@ -112,28 +119,28 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 			Ok(())
 		}
 
-		#[pallet::weight(1)]
+		#[pallet::weight(1_000)]
 		pub fn add_proposal(origin: OriginFor<T>, proposal_string: Vec<u8>) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 			Self::add_proposal_impl(sender, proposal_string)?;
 			Ok(())
 		}
 
-		#[pallet::weight(1)]
+		#[pallet::weight(1_000)]
 		pub fn reserve_voting_power(origin: OriginFor<T>, amount: CurrencyAmount<T>) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 			Self::reserve_voting_power_impl(sender, amount)?;
 			Ok(())
 		}
 
-		#[pallet::weight(1)]
+		#[pallet::weight(1_000)]
 		pub fn release_all_voting_power(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 			Self::release_all_voting_power_impl(sender)?;
 			Ok(())
 		}
 
-		#[pallet::weight(1)]
+		#[pallet::weight(1_000)]
 		pub fn vote_on_current_proposal(origin: OriginFor<T>, verdict: bool) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 			Self::vote_on_current_proposal_impl(sender, verdict)?;
@@ -147,6 +154,8 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 			let proposal_as_bounded: BoundedVec<u8, T::MaxProposalLength> = BoundedVec::truncate_from(proposal_string);
 			let proposal_escaped = proposal_as_bounded.escape_ascii().to_string();
 			Proposals::<T>::try_append(proposal_as_bounded)
+				.map_err(|()| Error::<T>::TooManyProposals)?;
+			Proposers::<T>::try_append(sender.clone())
 				.map_err(|()| Error::<T>::TooManyProposals)?;
 			Self::deposit_event(Event::ProposalSubmitted(sender, proposal_escaped));
 			Ok(())
@@ -204,21 +213,36 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 
 		fn finalize_current_vote() {
 			// Getting current proposal if any and removing from storage
+			let mut proposers = Proposers::<T>::get();
 			let mut proposals = Proposals::<T>::get();
-			if(proposals.len() == 0) { 
+			if proposals.len() == 0 || proposers.len() == 0 { 
 				return; 
 			}
 			let proposal_bounded = proposals.get(0).expect("Already checked length").clone();
+			let proposer = proposers.get(0).expect("Same as proposals length").clone(); // Grab account id from proposal queue
 			proposals.remove(0);
+			proposers.remove(0);
 			Proposals::<T>::set(proposals);
+			Proposers::<T>::set(proposers);
 			let proposal_escaped = proposal_bounded.escape_ascii().to_string();
 
-			// Getting current tally and setting to 0's
+			// Getting current tally and resetting it
 			let tally = Tally::<T>::take();
+			
+			if tally.0 > tally.1 * 2 {
+				// Use proposal to trigger proposal action if any
+				if proposal_escaped == "mint a kitty" {
+					let origin = OriginFor::<T>::root();
+					T::Kitties::free_create_kitty(origin, proposer).unwrap(); // Honestly don't know what to do with this return value. No time to solve
+				}
+				
+				Self::deposit_event(Event::VoteOnCurrentProposalPassed(proposal_escaped, tally));
+			} else {
 
-			// Use proposal and tally to trigger proposal action if any
+			}
+			
 
-			Self::deposit_event(Event::VoteOnCurrentProposalFinalized(proposal_escaped, tally));
+			
 		}
 	}
 }

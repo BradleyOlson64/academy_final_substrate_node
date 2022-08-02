@@ -120,7 +120,7 @@ pub mod pallet {
 		/// Create a new unique kitty.
 		///
 		/// The actual kitty creation is done in the `mint()` function.
-		#[pallet::weight(1_000)]
+		#[pallet::weight(1_000_000)]
 		pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
 			// Make sure the caller is from a signed origin
 			let sender = ensure_signed(origin)?;
@@ -130,6 +130,18 @@ pub mod pallet {
 
 			// Write new kitty to storage by calling helper function
 			Self::mint(&sender, kitty_gen_dna, gender)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn free_create_kitty(origin: OriginFor<T>, recipient: T::AccountId) -> DispatchResult {
+			ensure_root(origin)?;
+			// Generate unique DNA and Gender using a helper function
+			let (kitty_gen_dna, gender) = Self::gen_dna();
+
+			// Write new kitty to storage by calling helper function
+			Self::mint(&recipient, kitty_gen_dna, gender)?;
 
 			Ok(())
 		}
@@ -368,6 +380,11 @@ impl<T: Config> brads_soft_coupling::KittiesInterface<T::Origin, T::AccountId, B
 
     fn create_kitty(origin: T::Origin) -> DispatchResult {
 		Pallet::<T>::create_kitty(origin)?;
+		Ok(())
+	}
+
+	fn free_create_kitty(origin: T::Origin, recipient: T::AccountId) -> DispatchResult{
+		Pallet::<T>::free_create_kitty(origin, recipient)?;
 		Ok(())
 	}
 
