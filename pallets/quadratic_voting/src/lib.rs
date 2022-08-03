@@ -74,6 +74,8 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		VotedWithNoVotingPower,
 		/// Tried to vote while not in voter set
 		NotInVoterSet,
+		/// Tried to vote but there are no proposals
+		NoProposalToVoteFor,
 		/// Failed converting balance type to vote number
 		BalanceToVoteConvertFailed,
 	}
@@ -192,6 +194,7 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 			if let None = T::Identity::get_voter_from_set(sender.clone()) {
 				return Result::Err(frame_support::dispatch::DispatchError::from(Error::<T>::NotInVoterSet));
 			}
+			ensure!(Proposals::<T>::get().len() > 0, Error::<T>::NoProposalToVoteFor);
 			let voter_reserve = ReserveSet::<T>::get(sender.clone());
 			let voter_power: u128 = Self::calc_voter_power_from_reserve(voter_reserve)?;
 			let mut current_tally = Tally::<T>::get();

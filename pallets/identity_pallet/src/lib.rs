@@ -45,6 +45,8 @@ pub mod pallet {
 	/// Non storage items
 	pub(super) type VouchersFor<T> = BoundedVec<<T as frame_system::Config>::AccountId, <T as Config>::MinVouches>;
 
+	// Should introduce new structure to keep track of who has already voted on the current proposal
+	
 	// Pallets events
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
