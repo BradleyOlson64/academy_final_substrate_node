@@ -6,7 +6,10 @@ In short, the identity pallet feeds information about the valid voter set to the
 
 ### Run
 --Test QuadraticVoting pallet cargo test -p quadratic-voting
+
 --Test Identity pallet        cargo test -p identity-pallet
+
 --Test in full node environment: cargo run -r -- --dev
+
  (I didn't, but feel free to see if this works)
 
