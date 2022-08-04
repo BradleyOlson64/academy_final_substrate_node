@@ -45,7 +45,6 @@ pub use sp_runtime::{Perbill, Permill};
 
 /// Import the template pallet.
 pub use identity_pallet;
-pub use proof_of_existence;
 pub use quadratic_voting;
 pub use crypto_kitties;
 pub use brads_soft_coupling;
@@ -283,12 +282,6 @@ impl crypto_kitties::Config for Runtime {
     type MaxKittiesOwned = frame_support::pallet_prelude::ConstU32<1>;
 }
 
-impl proof_of_existence::Config for Runtime {
-	type Event = Event;
-	type Token = Balances;
-	type ReserveAmount = ReserveAmount;
-}
-
 impl quadratic_voting::Config for Runtime {
 	type Event = Event;
 	type Token = Balances;
@@ -320,7 +313,6 @@ construct_runtime!(
 		IdentityPallet: identity_pallet,
 		SubstrateKitties: crypto_kitties,
 		QuadraticVoting: quadratic_voting,
-		ProofOfExistence: proof_of_existence,
 	}
 );
 

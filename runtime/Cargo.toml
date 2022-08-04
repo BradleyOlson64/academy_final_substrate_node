@@ -51,7 +51,6 @@ hex-literal = { version = "0.3.4", optional = true }
 # Local Dependencies
 identity-pallet = { version = "4.0.0-dev", default-features = false, path = "../pallets/identity_pallet" }
 crypto-kitties = { version = "4.0.0-dev", default-features = false, path = "../pallets/crypto_kitties" }
-proof-of-existence = { version = "4.0.0-dev", default-features = false, path = "../pallets/proof_of_existence" }
 quadratic-voting = { version = "4.0.0-dev", default-features = false, path = "../pallets/quadratic_voting" }
 brads-soft-coupling = { default-features = false, version = "4.0.0-dev", path = "../pallets/brads_soft_coupling" }
 [build-dependencies]
@@ -61,7 +60,6 @@ substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/pari
 default = ["std"]
 std = [
 	"crypto-kitties/std",
-	"proof-of-existence/std",
 	"quadratic-voting/std",
 	"codec/std",
 	"scale-info/std",

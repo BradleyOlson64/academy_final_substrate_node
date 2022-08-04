@@ -2,7 +2,6 @@
 members = [
     "node",
     "pallets/identity_pallet",
-    "pallets/proof_of_existence",
     "pallets/crypto_kitties",
     "pallets/quadratic_voting",
     "runtime",
