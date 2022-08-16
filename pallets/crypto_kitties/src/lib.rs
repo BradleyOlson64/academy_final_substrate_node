@@ -134,6 +134,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Create kitty for free via 0 weight
 		#[pallet::weight(0)]
 		pub fn free_create_kitty(origin: OriginFor<T>, recipient: T::AccountId) -> DispatchResult {
 			ensure_root(origin)?;
@@ -362,6 +363,7 @@ pub mod pallet {
 	}
 }
 
+// Implementation which allows KittiesInterfaces to use full crypto_kitties pallet functionality
 impl<T: Config> brads_soft_coupling::KittiesInterface<T::Origin, T::AccountId, BalanceOf<T>, BoundedVec<[u8; 16], T::MaxKittiesOwned>, DispatchResult> for Pallet<T> {
 	fn buy_kitty(origin: T::Origin, kitty_id: [u8; 16], bid_price: BalanceOf<T>) -> DispatchResult {
 		Pallet::<T>::buy_kitty(origin, kitty_id, bid_price)?;

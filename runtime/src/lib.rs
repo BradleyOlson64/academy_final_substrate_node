@@ -271,10 +271,6 @@ impl identity_pallet::Config for Runtime {
 	type MinVouches = ConstU32<2>;
 }
 
-parameter_types! {
-	pub const ReserveAmount: Balance = 1000;
-}
-
 impl crypto_kitties::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
@@ -289,7 +285,6 @@ impl quadratic_voting::Config for Runtime {
 	type MaxProposalLength = ConstU32<1000>;
 	type BlocksPerVote = ConstU32<60>;
 	type ParticipationThreshold = ConstU128<10_000>;
-	type MinReserveAmount = ReserveAmount;
 	type Identity = IdentityPallet;
 	type Kitties = SubstrateKitties;
 }

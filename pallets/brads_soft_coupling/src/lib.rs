@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+/// Interface usable to expose identity pallet functionality without requiring the identity pallet itself as a dependency.
 pub trait IdentityInterface<Origin, AccountId, DispatchResult> {
     fn try_add_as_social_graph_originator(origin: Origin) -> DispatchResult;
 
@@ -8,6 +9,7 @@ pub trait IdentityInterface<Origin, AccountId, DispatchResult> {
     fn get_voter_from_set(account_id: AccountId) -> Option<()>;
 }
 
+/// Interface usable to expose kitties pallet functionality without requiring the kitties pallet itself as a dependency
 pub trait KittiesInterface<Origin, AccountId, Balance, BoundedVec, DispatchResult> {
     fn buy_kitty(origin: Origin, kitty_id: [u8; 16], bid_price: Balance) -> DispatchResult;
 

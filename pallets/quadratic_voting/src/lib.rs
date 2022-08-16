@@ -28,18 +28,22 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Token: ReservableCurrency<Self::AccountId>; //Loose coupling. This is some notion of token that satisfies a trait
+		/// Configurable constant for max number of proposals in queue to be voted on
 		#[pallet::constant]
 		type MaxProposals: Get<u32>;
+		/// Configurable constant for max length of any single proposal in bytes
 		#[pallet::constant]
 		type MaxProposalLength: Get<u32>;
+		/// Configurable constant for number of blocks that elapse between finalization of each current proposals at front of proposal queue
 		#[pallet::constant]
 		type BlocksPerVote: Get<u32>;
+		/// Configurable constant for voting power threshold. If not enough voting power votes on the current proposal, it fails regardless
+		/// of yae/nay ratio
 		#[pallet::constant]
 		type ParticipationThreshold: Get<u128>;
-		#[pallet::constant]
-		type MinReserveAmount: Get<<Self::Token as Currency<Self::AccountId>>::Balance>;
-		/// Soft coupled custom pallets
+		/// Soft coupled interface for identity-pallet
 		type Identity: IdentityInterface<Self::Origin, Self::AccountId, DispatchResult>;
+		/// Soft coupled interface for crypto-kitties pallet
 		type Kitties: KittiesInterface<Self::Origin, Self::AccountId, <Self::Token as Currency<Self::AccountId>>::Balance, BoundedVec<[u8;16], ConstU32<1>>,  DispatchResult>;
 	}
 	// Pallets use events to inform users when important changes are made.
@@ -60,6 +64,7 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		/// Vote on current proposal failed [proposal, (ayeVotes, nayVotes)]
 		CurrentProposalRejected(BoundedVec<u8, T::MaxProposalLength>, (u128, u128)),
 	}
+	// All the errors that can prevent successful execution of this pallet's calls
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Doesn't make sense to add an empty proposal
@@ -80,23 +85,24 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		BalanceToVoteConvertFailed,
 	}
 
+	// The struct on which all this pallet's logic is implemented
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_proposals)]
-	/// A structure containing a bounded vec of proposal strings as byet vectors
+	/// A structure containing a bounded vec of proposal strings as byet vectors in order earliest to latest
 	pub(super) type Proposals<T: Config> = StorageValue<_, BoundedVec<BoundedVec<u8, T::MaxProposalLength>, T::MaxProposals>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_proposers)]
-	/// A structure containing the ordered list of all proposers
+	/// A storage value containing the bounded vec of all proposers in order earliest to latest
 	pub(super) type Proposers<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxProposalLength>, ValueQuery>;
 	
 	#[pallet::storage]
 	#[pallet::getter(fn get_reserve)]
-	/// The set containing associated reserves for each account id. Determines voting power.
+	/// The map containing associated reserves for each account id. Determines voting power.
 	pub(super) type ReserveSet<T: Config> = CountedStorageMap<_, Blake2_128, T::AccountId, CurrencyAmount<T>, ValueQuery>;
 	
 	#[pallet::storage]
@@ -106,6 +112,7 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		/// Every `BlocksPerVote` blocks a vote is finalized. The finalization process is triggered by on_initialize
 		fn on_initialize(b: BlockNumberFor<T>) -> u64{
 			// Every few blocks finalize the vote on another proposal
 			if (b % T::BlocksPerVote::get().into()) == BlockNumberFor::<T>::from(0u32) {
@@ -115,18 +122,13 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 		}
 	}
 
-	// Dispatchable functions allow users to interact with the pallet and invoke state changes.
-	// These functions materialize as "extrinsics", which are often compared to transactions.
-	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
+	// Calls for this pallet
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 
-		#[pallet::weight(10_000)]
-		pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult{
-			T::Kitties::create_kitty(origin.clone())?;
-			Ok(())
-		}
-
+		/// Adds a new proposal to the end of the queue.
+		/// Events: ProposalSubmitted
+		/// Errors: TriedToAddEmptyProposal, TooManyProposals
 		#[pallet::weight(1_000)]
 		pub fn add_proposal(origin: OriginFor<T>, proposal_string: Vec<u8>) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
@@ -134,6 +136,9 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 			Ok(())
 		}
 
+		/// Reserves voting power for a particular account id by reserving tokens
+		/// Events: VotingPowerReserved
+		/// Errors: InvalidReserveAmount
 		#[pallet::weight(1_000)]
 		pub fn reserve_voting_power(origin: OriginFor<T>, amount: CurrencyAmount<T>) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
@@ -141,6 +146,9 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 			Ok(())
 		}
 
+		/// Releases all voting power for a particular account, also unreserving their tokens
+		/// Events: AllVotingPowerReleased
+		/// Errors: NoVotingPowerToRelease
 		#[pallet::weight(1_000)]
 		pub fn release_all_voting_power(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
@@ -148,6 +156,9 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 			Ok(())
 		}
 
+		/// Votes aye or nay on current proposal, adding the square root of your reserve to either voting side
+		/// Events: VotedOnCurrentProposal
+		/// Errors: VotedWithNoVotingPower, NotInVoterSet, NoProposalToVoteFor
 		#[pallet::weight(1_000)]
 		pub fn vote_on_current_proposal(origin: OriginFor<T>, verdict: bool) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
@@ -158,43 +169,58 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 
 	impl<T: Config> Pallet<T> {
 		fn add_proposal_impl(sender: T::AccountId, proposal_string: Vec<u8>) -> Result<(), DispatchError> {
+			// Check that proposal is non-empty and that proposer is in voter set
 			ensure!(proposal_string.len() != 0, Error::<T>::TriedToAddEmptyProposal);
 			ensure!(T::Identity::get_voter_from_set(sender.clone()) == Some(()), Error::<T>::NotInVoterSet);
+			// Add to proposals and proposers BoundedVecs
 			let proposal_as_bounded: BoundedVec<u8, T::MaxProposalLength> = BoundedVec::truncate_from(proposal_string);
 			Proposals::<T>::try_append(proposal_as_bounded.clone())
 				.map_err(|()| Error::<T>::TooManyProposals)?;
 			Proposers::<T>::try_append(sender.clone())
 				.map_err(|()| Error::<T>::TooManyProposals)?;
+			// Send success event
 			Self::deposit_event(Event::ProposalSubmitted(sender, proposal_as_bounded));
 			Ok(())
 		}
 
 		fn reserve_voting_power_impl(sender: T::AccountId, amount: CurrencyAmount<T>) -> Result<(), DispatchError> {
+			// Check for valid reserve amount. 0 is not valid
 			let zero_as_balance: CurrencyAmount<T> = CurrencyAmount::<T>::from(0u32); // Must be a better way to do this, but I don't have time
 			ensure!(amount > zero_as_balance, Error::<T>::InvalidReserveAmount); 
+			// Reserve tokens and add to or create new reserve set entry
 			T::Token::reserve(&sender, amount)?;
-			ReserveSet::<T>::insert(sender.clone(), amount);
-
+			if ReserveSet::<T>::contains_key(sender.clone()) {
+				let current = ReserveSet::<T>::get(sender.clone());
+				ReserveSet::<T>::insert(sender.clone(), amount + current);
+			}
+			else {
+				ReserveSet::<T>::insert(sender.clone(), amount);
+			}
+			// Send success event
 			Self::deposit_event(Event::VotingPowerReserved(sender.clone(), amount));
 			Ok(())
 		}
 
 		fn release_all_voting_power_impl(sender: T::AccountId) -> Result<(), DispatchError> {
+			// Make sure there is voting power to release
 			ensure!(ReserveSet::<T>::contains_key(sender.clone()), Error::<T>::NoVotingPowerToRelease);
+			// Remove sender from ReserveSet and unreserve their tokens
 			let amount = ReserveSet::<T>::get(sender.clone());
 			T::Token::unreserve(&sender, amount);
 			ReserveSet::<T>::remove(sender.clone());
-
+			// Send success event
 			Self::deposit_event(Event::AllVotingPowerReleased(sender.clone()));
 			Ok(())
 		}
 
 		fn vote_on_current_proposal_impl(sender: T::AccountId, verdict: bool) -> Result<(), DispatchError> {
+			// Check failure conditions
 			ensure!(ReserveSet::<T>::contains_key(sender.clone()), Error::<T>::VotedWithNoVotingPower);
 			if let None = T::Identity::get_voter_from_set(sender.clone()) {
 				return Result::Err(frame_support::dispatch::DispatchError::from(Error::<T>::NotInVoterSet));
 			}
 			ensure!(Proposals::<T>::get().len() > 0, Error::<T>::NoProposalToVoteFor);
+			// Calculate voter power from reserve and add that power to the tally of whichever side they supported
 			let voter_reserve = ReserveSet::<T>::get(sender.clone());
 			let voter_power: u128 = Self::calc_voter_power_from_reserve(voter_reserve)?;
 			let mut current_tally = Tally::<T>::get();
@@ -204,20 +230,12 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 				current_tally.1 += voter_power;
 			}
 			Tally::<T>::put(current_tally);
+			// Send success event
 			Self::deposit_event(Event::VotedOnCurrentProposal(sender.clone(), current_tally));
 			Ok(())
 		}
 
-		pub fn get_current_proposal_impl() -> Option<BoundedVec<u8, T::MaxProposalLength>> {
-			let proposals = Proposals::<T>::get();
-			if let Some(proposal) = proposals.get(0) {
-				let result = proposal.clone();
-				return Some(result);
-			};
-
-			None
-		}
-
+		// Calculate voter power as square root of reserve. Fails if reserve is somehow negative
 		fn calc_voter_power_from_reserve(reserve: CurrencyAmount<T>) -> Result<u128, Error::<T>> {
 			reserve.integer_sqrt().try_into().map_err(|_err| Error::<T>::BalanceToVoteConvertFailed)
 		}
@@ -246,16 +264,18 @@ use frame_support::{pallet_prelude::*, traits::ReservableCurrency, traits::Curre
 				Some(x) => x,
 				None => 0
 			};
+			// If > 2/3 approval and over participation threshold then pass
 			if tally.0 > twice_nay && yae_and_nay > T::ParticipationThreshold::get() {
 				// Use proposal to trigger proposal action if any
 				if proposal_bounded.to_vec() == b"mint a kitty".to_vec() {
 					let origin = OriginFor::<T>::root();
 					T::Kitties::free_create_kitty(origin, proposer).unwrap(); // Honestly don't know what to do with this return value. No time to solve
 				}
-				
+				// Send success event
 				Self::deposit_event(Event::VoteOnCurrentProposalPassed(proposal_bounded, tally));
 			} else {
-
+				// Send failure event
+				Self::deposit_event(Event::CurrentProposalRejected(proposal_bounded, tally));
 			}
 			
 

@@ -72,7 +72,6 @@ impl pallet_balances::Config for Test {
 impl quadratic_voting::Config for Test {
 	type Event = Event;
 	type Token = Balances;
-	type MinReserveAmount = ConstU128<100>;
 	type MaxProposals = ConstU32<10>;
 	type MaxProposalLength = ConstU32<1_000>;
 	type BlocksPerVote = ConstU32<60>;
