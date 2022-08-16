@@ -38,10 +38,10 @@ fn can_add_voting_power() {
 #[test]
 fn add_voting_power_errors() {
 	ExtBuilder::build().execute_with(|| {
-		let origin = Origin::signed(1);
+		let origin = Origin::signed(2);
 		assert_ok!(IdentityPallet::try_add_as_social_graph_originator(origin.clone()));
 		assert_noop!(QuadraticVoting::reserve_voting_power(origin.clone(), 0u128), Error::<Test>::InvalidReserveAmount);
-		//assert_noop!(QuadraticVoting::reserve_voting_power(origin.clone(), 1_000_000_000_000u128), Error::<Test>::InvalidReserveAmount);
+		assert_noop!(QuadraticVoting::reserve_voting_power(origin.clone(), 1_000_000_000_000_000u128), pallet_balances::Error::<Test>::InsufficientBalance);
 	});
 }
 
